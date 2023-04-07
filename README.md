@@ -3,12 +3,8 @@ REST API construida com Spring boot que permite o registro de usuários e seus e
 
 Utiliza a base H2. 
 
-<br>
-
 # API endpoints
 Aqui estão listados todos os endpoints da API.
-
-<br>
 
 ## POST /user/new
 Cria um novo usuário. 
