@@ -3,10 +3,13 @@ REST API construida com Spring boot que permite o registro de usuários e seus e
 
 Utiliza a base H2. 
 
+# Spring Security
+A API contém autenticação com Spring Security + JWT. Os endpoints PUT - /public/login e PUT - /public/register estão desprotegidos para o registro e login. Os demais devem ser acessados com o token JWT enviado no header de resposta ao login. 
+
 # API endpoints
 Aqui estão listados todos os endpoints da API.
 
-## POST /user/new
+## POST /public/register
 Cria um novo usuário. 
 
 **Parâmetros**
@@ -14,30 +17,38 @@ Cria um novo usuário.
 | ------------- | ------------- | ------------- | ------------- |
 | name | Sim  | String  | Nome do usuário  |
 | birthDate | Sim  | yyyy-MM-dd | Data de nascimento do usuário  |
+| userName | Sim  | String  | Nickname do usuário  |
+| password | Sim  | String | Senha  |
 
 **Requisição**
 ```
 {
-    "name": "Lucas", 
-    "birthDate": "2023-01-31"
+    "userName": "atolini", 
+    "password": "teste123", 
+    "birthDate": "2023-03-01", 
+    "name": "Lucas"
 }
 ```
 
-**Resposta**
+## POST /public/login
+Gera um token JWT válido. 
+
+**Parâmetros**
+| Nome  | Obrigatório | Type | Descrição |
+| ------------- | ------------- | ------------- | ------------- |
+| userName | Sim  | String  | Nickname do usuário  |
+| password | Sim  | String | Senha  |
+
+**Requisição**
 ```
 {
-    "id": 3,
-    "name": "Lucas",
-    "birthDate": "2023-01-31",
-    "addresses": [],
-    "mainAddress": null,
-    "_links": {
-        "self": {
-            "href": "http://localhost:8081/user/3"
-        }
-    }
+    "userName": "atolini", 
+    "password": "teste123"
 }
 ```
+
+## POST /user/logout
+Desativa o token JWT para um usuário logado.
 
 ## POST /user/create-address/{id}
 Cria um endereço para o usuário. 
