@@ -1,5 +1,6 @@
 package br.com.lucasatolini.attornatus.service;
 
+import br.com.lucasatolini.attornatus.config.AuthenticatedUser;
 import br.com.lucasatolini.attornatus.controller.vo.UserVO;
 import br.com.lucasatolini.attornatus.model.Address;
 import br.com.lucasatolini.attornatus.model.User;
@@ -13,18 +14,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 @Service
 @Transactional
-public class UserService {
+public class UserService implements UserDetailsService {
 
-    private final String nonExistentMessage = "Non-existent user";
+    private static final String NON_EXISTENT_MESSAGE = "Non-existent user";
 
     @Autowired
     private final Validator validator;
+
+    @Autowired
+    private PasswordEncoder encoder;
 
     @Autowired
     private final UserRepository userRepository;
@@ -41,6 +49,9 @@ public class UserService {
         User userToSave = new User();
         userToSave.setBirthDate(user.getBirthDate());
         userToSave.setName(user.getName());
+        userToSave.setPassword(encoder.encode(user.getPassword()));
+        userToSave.setUsername(user.getUserName());
+        userToSave.setAuthenticated(false);
         return this.userRepository.save(userToSave);
     }
 
@@ -49,7 +60,7 @@ public class UserService {
     }
 
     public User edit(@Valid UserVO user) {
-        if (user.getId() != null) {
+        if (user.getId() != null && user.getName() != null && user.getBirthDate() != null) {
             this.userRepository.update(user.getName(), user.getBirthDate(), user.getId());
 
             Optional<User> userUpdated = this.userRepository.findById(user.getId());
@@ -59,7 +70,7 @@ public class UserService {
             }
         }
 
-        throw new EntityNotFoundException("");
+        throw new EntityNotFoundException("Please send all information: date of birth, name and id.");
     }
 
     public User createAddress(Long id, Address address) {
@@ -71,7 +82,7 @@ public class UserService {
             return this.userRepository.save(userFetched);
         }
 
-        throw new EntityNotFoundException(nonExistentMessage);
+        throw new EntityNotFoundException(NON_EXISTENT_MESSAGE);
     }
 
     public User attachMainAddress(Long userId, Long addressId) {
@@ -135,11 +146,28 @@ public class UserService {
             return userFetched;
         }
 
-        throw new EntityNotFoundException(nonExistentMessage);
+        throw new EntityNotFoundException(NON_EXISTENT_MESSAGE);
     }
 
     public Page<User> getAll(Integer pageNumber, Integer pageSize) {
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
         return this.userRepository.findAll(pageable);
+    }
+
+    public void setAuthenticated(Boolean value, User user) {
+        Optional<User> userFetched = this.userRepository.findById(user.getId());
+        userFetched.ifPresent(u -> {
+            u.setAuthenticated(value);
+            this.userRepository.save(u);
+        });
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            throw new UsernameNotFoundException(username);
+        }
+        return new AuthenticatedUser(user);
     }
 }

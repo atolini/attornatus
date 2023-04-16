@@ -1,6 +1,7 @@
 package br.com.lucasatolini.attornatus.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -33,6 +34,18 @@ public class User extends RepresentationModel<User> {
 
     @OneToOne(cascade = CascadeType.ALL)
     private Address mainAddress;
+
+    @Column(nullable = false, unique = true)
+    @JsonIgnore
+    private String username;
+
+    @Column(nullable = false)
+    @JsonIgnore
+    private String password;
+
+    @Column(nullable = false)
+    @JsonIgnore
+    private Boolean isAuthenticated;
 
     public User() {
         this.addresses = new ArrayList<>();
@@ -91,5 +104,30 @@ public class User extends RepresentationModel<User> {
 
     public void removeAddress(Address address) {
         this.addresses.remove(address);
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    @JsonIgnore
+    public Boolean getAuthenticated() {
+        return isAuthenticated;
+    }
+
+    public void setAuthenticated(Boolean authenticated) {
+        isAuthenticated = authenticated;
     }
 }

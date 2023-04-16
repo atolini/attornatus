@@ -1,23 +1,23 @@
 package br.com.lucasatolini.attornatus.controller;
 
+import br.com.lucasatolini.attornatus.config.AuthenticatedUser;
 import br.com.lucasatolini.attornatus.controller.vo.UserVO;
 import br.com.lucasatolini.attornatus.model.Address;
 import br.com.lucasatolini.attornatus.model.User;
+import br.com.lucasatolini.attornatus.repository.UserRepository;
 import br.com.lucasatolini.attornatus.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
-
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequestMapping("/user")
@@ -26,16 +26,10 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    /* POST - CREATE METHODS */
-    @PostMapping("/new")
-    public ResponseEntity<User> create(@RequestBody @Valid UserVO user) {
-        User userCreated = this.userService.save(user);
-        Long id = userCreated.getId();
-        Link selfLink = linkTo(methodOn(UserController.class).getUserById(id)).withSelfRel();
-        userCreated.add(selfLink);
-        return ResponseEntity.status(HttpStatus.CREATED).body(userCreated);
-    }
+    @Autowired
+    private UserRepository repo;
 
+    /* POST - CREATE METHODS */
     @PostMapping("/create-address/{id}")
     public ResponseEntity<User> createAddress(@PathVariable Long id, @Valid @RequestBody Address address) {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.createAddress(id, address));
@@ -56,6 +50,15 @@ public class UserController {
         } else {
             throw new EntityNotFoundException();
         }
+    }
+
+    @GetMapping("logout")
+    public ResponseEntity<Object> logout() {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        AuthenticatedUser authenticatedUser = (AuthenticatedUser) securityContext.getAuthentication();
+        User user = (User) authenticatedUser.getPrincipal();
+        this.userService.setAuthenticated(false, user);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @GetMapping("/get-all/{pageNumber}/{pageSize}")

@@ -20,7 +20,7 @@ public class Address extends RepresentationModel<Address> {
 
     @Column(nullable = false, updatable = false, length = 8)
     @NotNull(message = "Zip code must not be blank")
-    @Size(max=8, min=7, message = "Zip code must ")
+    @Size(max=8, min=7, message = "Zip code must be 8 characters")
     private String zipCode;
 
     @Column(nullable = false, updatable = false, length = 10)
